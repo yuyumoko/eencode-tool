@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Encryption/Decryption Tool</title>
+    <link rel="stylesheet" href="index.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <h2>Encryption/Decryption Tool</h2>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="showTab('decrypt')">
+            Decrypt
+          </button>
+          <button class="tab-btn" onclick="showTab('encrypt')">Encrypt</button>
+        </div>
+
+        <div id="decrypt" class="tab-content">
+          <div class="input-group">
+            <label for="encryptedText">Enter encrypted text:</label>
+            <textarea id="encryptedText" rows="4"></textarea>
+          </div>
+          <div class="input-group">
+            <label for="keyDecrypt">Key:</label>
+            <input
+              type="text"
+              id="keyDecrypt"
+              value="12345678123412341234123456781234"
+            />
+          </div>
+          <button class="btn" onclick="decryptText()">Decrypt</button>
+          <div id="decryptedResult" class="result"></div>
+        </div>
+
+        <div id="encrypt" class="tab-content" style="display: none">
+          <div class="input-group">
+            <label for="inputText">Enter text to encrypt:</label>
+            <textarea id="inputText" rows="4"></textarea>
+          </div>
+          <div class="input-group">
+            <label for="keyEncrypt">Key:</label>
+            <input
+              type="text"
+              id="keyEncrypt"
+              value="12345678123412341234123456781234"
+            />
+          </div>
+          <button class="btn" onclick="encryptText()">Encrypt</button>
+          <div id="encryptedResult" class="result"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+      <img id="modalImg" src="" alt="Preview" />
+    </div>
+
+    <script>
+      function randomString(length) {
+        const characters = "ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678";
+        let result = "";
+        for (let i = 0; i < length; i++) {
+          result += characters.charAt(
+            Math.floor(Math.random() * characters.length)
+          );
+        }
+        return result;
+      }
+
+      function encrypt(text, key) {
+        let iv = randomString(16);
+        let ivParsed = CryptoJS.enc.Utf8.parse(iv);
+        let keyParsed = CryptoJS.enc.Utf8.parse(key);
+        let encrypted = CryptoJS.AES.encrypt(text, keyParsed, {
+          iv: ivParsed,
+          mode: CryptoJS.mode.CTR,
+          padding: CryptoJS.pad.NoPadding,
+        });
+        let encryptedHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex);
+        return iv + "*" + encryptedHex;
+      }
+
+      function decrypt(text, key) {
+        let textParts = text.split("*");
+        let iv = textParts[0];
+        let encrypted = textParts[1];
+        let ivParsed = CryptoJS.enc.Utf8.parse(iv);
+        let keyParsed = CryptoJS.enc.Utf8.parse(key);
+        let encryptedHex = CryptoJS.enc.Hex.parse(encrypted);
+        let encryptedBase64 = CryptoJS.enc.Base64.stringify(encryptedHex);
+        let decrypted = CryptoJS.AES.decrypt(encryptedBase64, keyParsed, {
+          iv: ivParsed,
+          mode: CryptoJS.mode.CTR,
+          padding: CryptoJS.pad.NoPadding,
+        });
+        return decrypted.toString(CryptoJS.enc.Utf8);
+      }
+
+      function showTab(tabId) {
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((tab) => (tab.style.display = "none"));
+        document.getElementById(tabId).style.display = "block";
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        document
+          .querySelector(`.tab-btn[onclick="showTab('${tabId}')"]`)
+          .classList.add("active");
+      }
+
+      function encryptText() {
+        let text = document.getElementById("inputText").value;
+        let key = document.getElementById("keyEncrypt").value;
+        let encrypted = encrypt("pgd:" + text, key);
+        document.getElementById("encryptedResult").textContent =
+          "pge:" + encrypted;
+      }
+
+      function decryptText() {
+        let text = document.getElementById("encryptedText").value;
+
+        if (text.startsWith("pge:")) {
+          text = text.substring(4);
+        }
+
+        let key = document.getElementById("keyDecrypt").value;
+        let decrypted = decrypt(text, key);
+        let resultContainer = document.getElementById("decryptedResult");
+        resultContainer.innerHTML = ""; // Clear previous content
+
+        if (decrypted.startsWith("pgd:")) {
+          decrypted = decrypted.substring(4);
+        }
+
+        const isImgStart = decrypted.startsWith("img-start:\n");
+        if (isImgStart) {
+          let decode_text = decrypted.replace(/img-start:\n/g, "");
+          decode_text = decode_text.replace(/\nimg-end/g, "");
+          const imgUrls = decode_text.split("\n");
+
+          for (const imgUrl of imgUrls) {
+            if (imgUrl.match(/\.(jpeg|jpg|gif|png)$/)) {
+              let img = document.createElement("img");
+              img.src = imgUrl;
+              img.alt = "Image Preview";
+              img.classList.add("preview-img");
+              img.onclick = () => showModal(img.src);
+              resultContainer.appendChild(img);
+            }
+          }
+        } else {
+          resultContainer.textContent = "Decrypted: " + decrypted;
+        }
+      }
+
+      function showModal(src) {
+        const modalImg = document.getElementById("modalImg");
+        const modalOverlay = document.getElementById("modalOverlay");
+        modalImg.src = src;
+        modalOverlay.classList.add("show");
+      }
+
+      function closeModal() {
+        document.getElementById("modalOverlay").classList.remove("show");
+      }
+
+      document.getElementById("modalOverlay").onclick = closeModal;
+    </script>
+  </body>
+</html>
