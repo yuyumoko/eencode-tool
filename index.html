@@ -31,7 +31,6 @@
               value="12345678123412341234123456781234"
             />
           </div>
-          <button class="btn" onclick="decryptText()">Decrypt</button>
           <div id="decryptedResult" class="result"></div>
         </div>
 
@@ -48,17 +47,50 @@
               value="12345678123412341234123456781234"
             />
           </div>
-          <button class="btn" onclick="encryptText()">Encrypt</button>
           <div id="encryptedResult" class="result"></div>
         </div>
       </div>
     </div>
 
-    <div class="modal-overlay" id="modalOverlay">
-      <img id="modalImg" src="" alt="Preview" />
+    <div id="modalOverlay" class="modal-overlay">
+      <img id="modalImg" class="modal-img" alt="Image Preview" />
     </div>
 
     <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const key = urlParams.get("key") || "12345678123412341234123456781234";
+        const text = urlParams.get("text");
+
+        showTab("decrypt");
+
+        if (text) {
+          const decryptedText = decrypt(text, key);
+          document.getElementById("encryptedText").value = text;
+          document.getElementById("keyDecrypt").value = key;
+
+          updateDecryptionResult(decryptedText);
+        }
+
+        document.getElementById("inputText").addEventListener("input", () => {
+          autoEncrypt();
+        });
+
+        document.getElementById("keyEncrypt").addEventListener("input", () => {
+          autoEncrypt();
+        });
+
+        document
+          .getElementById("encryptedText")
+          .addEventListener("input", () => {
+            autoDecrypt();
+          });
+
+        document.getElementById("keyDecrypt").addEventListener("input", () => {
+          autoDecrypt();
+        });
+      });
+
       function randomString(length) {
         const characters = "ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678";
         let result = "";
@@ -112,24 +144,25 @@
           .classList.add("active");
       }
 
-      function encryptText() {
-        let text = document.getElementById("inputText").value;
-        let key = document.getElementById("keyEncrypt").value;
-        let encrypted = encrypt("pgd:" + text, key);
-        document.getElementById("encryptedResult").textContent =
-          "pge:" + encrypted;
+      function autoEncrypt() {
+        const text = document.getElementById("inputText").value;
+        const key = document.getElementById("keyEncrypt").value;
+        const encrypted = encrypt(text, key);
+        document.getElementById("encryptedResult").textContent = encrypted;
       }
 
-      function decryptText() {
+      function autoDecrypt() {
         let text = document.getElementById("encryptedText").value;
-
+        const key = document.getElementById("keyDecrypt").value;
         if (text.startsWith("pge:")) {
           text = text.substring(4);
         }
+        const decrypted = decrypt(text, key);
+        updateDecryptionResult(decrypted);
+      }
 
-        let key = document.getElementById("keyDecrypt").value;
-        let decrypted = decrypt(text, key);
-        let resultContainer = document.getElementById("decryptedResult");
+      function updateDecryptionResult(decrypted) {
+        const resultContainer = document.getElementById("decryptedResult");
         resultContainer.innerHTML = ""; // Clear previous content
 
         if (decrypted.startsWith("pgd:")) {
@@ -153,7 +186,7 @@
             }
           }
         } else {
-          resultContainer.textContent = "Decrypted: " + decrypted;
+          resultContainer.textContent = decrypted;
         }
       }
 
