@@ -63,16 +63,16 @@
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const key = urlParams.get("key") || "12345678123412341234123456781234";
+        const key = urlParams.get("key") || "";
         const text = urlParams.get("text");
 
         showTab("decrypt");
 
         if (text) {
-          const decryptedText = decrypt(text, key);
           document.getElementById("encryptedText").value = text;
           document.getElementById("keyDecrypt").value = key;
 
+          const decryptedText = decrypt(text, key);
           updateDecryptionResult(decryptedText);
         }
 
@@ -197,10 +197,17 @@
 
           for (const msg of msgList) {
             if (!msg) continue;
-            let msgSplit = msg.split(":");
-            const type = msgSplit[0];
-            msgSplit.shift();
-            const value = msgSplit.join(":");
+            let type = "";
+            let value = "";
+            if (msg.indexOf(":") === -1) {
+              type = "text";
+              value = msg;
+            } else {
+              let msgSplit = msg.split(":");
+              type = msgSplit[0];
+              msgSplit.shift();
+              value = msgSplit.join(":");
+            }
 
             switch (type) {
               case "text":
