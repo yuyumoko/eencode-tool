@@ -13,9 +13,11 @@
         <h2>Encryption/Decryption Tool</h2>
         <div class="tabs">
           <button class="tab-btn active" onclick="showTab('decrypt')">
-            Decrypt
+            <span>Decrypt</span>
           </button>
-          <button class="tab-btn" onclick="showTab('encrypt')">Encrypt</button>
+          <button class="tab-btn" onclick="showTab('encrypt')">
+            <span>Encrypt</span>
+          </button>
         </div>
 
         <div id="decrypt" class="tab-content">
@@ -23,11 +25,13 @@
             <label for="encryptedText">Enter encrypted text:</label>
             <textarea id="encryptedText" rows="4"></textarea>
           </div>
-          <div class="input-group">
-            <label for="keyDecrypt">Key:</label>
+          <div class="input-group input-container">
+            <label for="keyDecrypt">AES Key:</label>
             <input
-              type="text"
               id="keyDecrypt"
+              placeholder="enter key here"
+              class="key-input"
+              type="text"
               value="12345678123412341234123456781234"
             />
           </div>
@@ -161,6 +165,15 @@
         updateDecryptionResult(decrypted);
       }
 
+      function imageElement(src) {
+        let img = document.createElement("img");
+        img.src = src;
+        img.alt = "Image Preview";
+        img.classList.add("preview-img");
+        img.onclick = () => showModal(img.src);
+        return img;
+      }
+
       function updateDecryptionResult(decrypted) {
         const resultContainer = document.getElementById("decryptedResult");
         resultContainer.innerHTML = ""; // Clear previous content
@@ -176,18 +189,40 @@
           const imgUrls = decode_text.split("\n");
 
           for (const imgUrl of imgUrls) {
-            if (imgUrl.match(/\.(jpeg|jpg|gif|png)$/)) {
-              let img = document.createElement("img");
-              img.src = imgUrl;
-              img.alt = "Image Preview";
-              img.classList.add("preview-img");
-              img.onclick = () => showModal(img.src);
-              resultContainer.appendChild(img);
-            }
+            resultContainer.appendChild(imageElement(imgUrl));
           }
         } else {
-          resultContainer.textContent = decrypted;
+          resultContainer.innerHTML = "";
+          const msgList = decrypted.split("\n");
+
+          for (const msg of msgList) {
+            if (!msg) continue;
+            let msgSplit = msg.split(":");
+            const type = msgSplit[0];
+            msgSplit.shift();
+            const value = msgSplit.join(":");
+
+            switch (type) {
+              case "text":
+                resultContainer.innerHTML += `<p>${value}</p>`;
+                break;
+              case "imag":
+                let decode_text = value.replace(/img-start:\n/g, "");
+                decode_text = decode_text.replace(/\nimg-end/g, "");
+                const imgUrls = decode_text.split("\n");
+                for (const imgUrl of imgUrls) {
+                  resultContainer.appendChild(imageElement(imgUrl));
+                }
+                break;
+            }
+          }
         }
+
+        document.querySelectorAll(".preview-img").forEach((img) => {
+          img.addEventListener("click", () => {
+            showModal(img.src);
+          });
+        });
       }
 
       function showModal(src) {
