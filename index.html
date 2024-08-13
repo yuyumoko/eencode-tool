@@ -48,7 +48,6 @@
             <input
               type="text"
               id="keyEncrypt"
-              value="12345678123412341234123456781234"
             />
           </div>
           <div id="encryptedResult" class="result"></div>
@@ -63,7 +62,7 @@
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const key = urlParams.get("key") || "";
+        const key = urlParams.get("key");
         const text = urlParams.get("text");
 
         showTab("decrypt");
