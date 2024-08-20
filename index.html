@@ -69,6 +69,7 @@
         if (text) {
           document.getElementById("encryptedText").value = text;
           document.getElementById("keyDecrypt").value = key;
+          document.getElementById("keyEncrypt").value = key;
 
           const decryptedText = decrypt(text, key);
           updateDecryptionResult(decryptedText);
